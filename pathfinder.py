@@ -1,6 +1,8 @@
 
 from PIL import Image
 
+# import numpy as np
+
 bg = Image.new('RGBA', (600, 600), (0, 255, 0, 255))
 
 # bg.show()
@@ -22,6 +24,8 @@ class Map():
                 elevation_list.append(line.split())
             return elevation_list
 
+# discover the highest elevation, to be used in the point method to convert to alpha
+
     def find_max(self):
         max_elevation = int(self.elevation_list[0][0])
         for elevation_row in self.elevation_list:
@@ -29,6 +33,8 @@ class Map():
                 if int(elevation) > max_elevation:
                     max_elevation = int(elevation)
         return max_elevation
+
+# discover the lowest elevation, to be used in the point method to convert to alpha
 
     def find_min(self):
         min_elevation = int(self.elevation_list[0][0])
@@ -38,18 +44,22 @@ class Map():
                     min_elevation = int(elevation)
         return min_elevation
 
-
 # a method to create my points and store them in a list
 
     def create_points(self):
         points = []
-        for datapoint in self.elevation_list[elevation_row]:
-            coord = (self.elevation_list[elevation_row][i], self.elevation_list[i])
-            elevation = int(datapoint)
-            map = self
-            point = Point(coord, elevation, map)
-            points.append(point)
+
+        # read up on this enumerate method
+        
+        for y_pos, elevation_row in enumerate(self.elevation_list):
+            for x_pos, datapoint in enumerate(elevation_row):
+                coord = (x_pos, y_pos)
+                points.append(coord)
         print(points)
+        elevation = int(datapoint)
+        map = self
+        point = Point(coord, elevation, map)
+        points.append(point)
 
 
 
@@ -58,14 +68,14 @@ class Map():
 class Point():
     def __init__(self, coords, elevation, map):
         self.coords = coords
-        self.alpha = elevation_to_alpha()
+        self.alpha = self.elevation_to_alpha(elevation)
         self.map = map
 
     def elevation_to_alpha(self, elevation):
         max_elevation = self.map.max_elevation
         min_elevation = self.map.min_elevation
         elevation_range = max_elevation - min_elevation
-        return (elevation/elevation_range) * 255
+        print((elevation/elevation_range) * 255)
 
 
 Map("elevation_small.txt")
