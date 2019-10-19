@@ -1,18 +1,13 @@
 
 from PIL import Image
 
-# import numpy as np
-
-bg = Image.new('RGBA', (600, 600), (0, 255, 0, 255))
-
-# bg.show()
-
 class Map():
     def __init__(self, raw_file):
         self.elevation_list = self.create_data_from_raw_data(raw_file)
         self.max_elevation = self.find_max()
         self.min_elevation = self.find_min()
-        self.point_collection = self.create_points()
+        self.alpha_list = self.elevation_to_alpha(self.elevation_list)
+        self.map_drawing = self.create_map(self.elevation_list, self.alpha_list)
 
 # imports the txt file, uses readlines to create one array while keeping the lines separate, looping through each string in that list and splitting each list item in the string, so that is is an array of strings, ultimately resulting in an array of 600 arrays or 600 strings, so that each array is a new row, and each string is at a unique index—column—within its row
 
@@ -44,69 +39,108 @@ class Map():
                     min_elevation = int(elevation)
         return min_elevation
 
-# a method to create my points and store them in a list
+# transforms my elevations into their relative alpha values
 
-    def create_points(self):
+    def elevation_to_alpha(self, elevation_list):
+        alpha_list = []
+        for elevation_row in self.elevation_list:
+            for datapoint in elevation_row:
+                alpha_value = int(datapoint)
+                alpha_list.append(round(((alpha_value - self.min_elevation) / (self.max_elevation - self.min_elevation)) * 255))
+        return alpha_list
+
+# combined my create_point and my draw_map methods into one method, which collects my x and y coords, and uses them to map out my elevation values
+
+    def create_map(self, elevation_list, alpha_list):
         points = []
-
-        # read up on this enumerate method
-        
+        bg = Image.new('RGBA', (600, 600), (0, 0, 0, 255))
+        map = Image.new('RGBA', (600, 600), (0, 0, 0, 255))
         for y_pos, elevation_row in enumerate(self.elevation_list):
             for x_pos, datapoint in enumerate(elevation_row):
-                coord = (x_pos, y_pos)
-                points.append(coord)
-        print(points)
-        elevation = int(datapoint)
-        map = self
-        point = Point(coord, elevation, map)
-        points.append(point)
+                map.putpixel((x_pos, y_pos), (255, 255, 255, self.alpha_list[int(datapoint)]))
+        bg.paste(map, (0,0), map)
+        # bg.show()
 
 
 
+
+
+class Path():
+    def __init__(self, map):
+        self.map = map
+        self.path_points = self.collect_path_points()
+
+    def collect_path_points(self):
+        # list of coordinates for each step on my path
+        path_points = []
+
+        # list of elevations for each step on my path
+        elevations = []
+
+        # the change in elevation for each step I take, which will be needed to discover the most efficient path
+        elevation_change = []
+
+        # hardcoded starting points, to be replaced with a random starting point
+        x_pos = 0
+        y_pos = 200
+
+        # add my first elevation to my elevation list
+        elevations.append(self.map.elevation_list[y_pos][x_pos])
+
+        # add my first coord to my coord list
+        path_points.append((x_pos, y_pos))
+
+        # current elevation, needed to determine which step to take next
+        current_elev = int(elevations[-1])
+
+        # # current x position, to track when I've hit the end of the map
+        # current_x = [x_pos]
+        # print(current_x[-1])
+
+        # defining my three potential steps
+        step_N = abs(current_elev - int(self.map.elevation_list[y_pos - 1][x_pos + 1]))
+        step_E = abs(current_elev - int(self.map.elevation_list[y_pos][x_pos + 1]))
+        step_S = abs(current_elev - int(self.map.elevation_list[y_pos + 1][x_pos + 1]))
+
+        # deciding which of the three potential steps to take, and adding my new coord and elevation to the coord and elevation lists
+        while x_pos < 600:
+            if step_N <= step_E and step_N <= step_S:
+                path_points.append((x_pos + 1, y_pos - 1))
+                elevation_change.append(step_N)
+                x_pos += 1
+                y_pos -= 1
+            if step_E <= step_N and step_E <= step_S:
+                path_points.append((x_pos + 1, y_pos))
+                elevation_change.append(step_E)
+                x_pos += 1
+            if step_S <= step_N and step_S <= step_E:
+                path_points.append((x_pos + 1, y_pos + 1))
+                elevation_change.append(step_S)
+                x_pos += 1
+                y_pos += 1
+
+        print(path_points)
+
+# pick a starting point on the west side of the map (hardcode 0, 299 for now)
+
+# add that coordinate to a list
+
+# take a step forword to 1, and either 299, 300, or 301 (depending on elevation change)
+
+# for each step I take, collect the coordinates and store them in a list
+
+# continue until I reach the east end of the map
+
+# color each set of coordinates in my list to be blue, and add it to the map
     
 
-class Point():
-    def __init__(self, coords, elevation, map):
-        self.coords = coords
-        self.alpha = self.elevation_to_alpha(elevation)
-        self.map = map
 
-    def elevation_to_alpha(self, elevation):
-        max_elevation = self.map.max_elevation
-        min_elevation = self.map.min_elevation
-        elevation_range = max_elevation - min_elevation
-        print((elevation/elevation_range) * 255)
+# class Point():
+#     def __init__(self, coords, elevation):
+#         self.coords = coords
 
+# Map("elevation_small.txt")
 
-Map("elevation_small.txt")
-
-
-# find_max_min("elevation_small.txt")
-
-# create a Map class
-
-# create a Point class
-
-# Map class to-do list:
-#   initialize
-#   convert the raw file to data in the form I want it (a list of lists)
-#   go through data to find the max and min elevations
-#   convert each data point to a member of the Point class
-#   draw each point
-
-# what is passed in to create a Map?
-#   raw file
-
-# Point class to-do list:
-#   initialize
-#   make each Point a coordinate/alpha value pair by assigning alpha 0 to lowest elevation and alpha 255 to highest elevation
-
-# what is passed in to create a Point?
-#   - coordinate
-#   - elevation
-
-# write a method that converts elevation data into an alpha value, and then in the initializer, call that function
-
-
-
-
+if __name__ == "__main__":
+    map = Map("elevation_small.txt")
+    path = Path(map)
