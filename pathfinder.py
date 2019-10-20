@@ -52,7 +52,6 @@ class Map():
 # combined my create_point and my draw_map methods into one method, which collects my x and y coords, and uses them to map out my elevation values
 
     def create_map(self, elevation_list, alpha_list):
-        points = []
         bg = Image.new('RGBA', (600, 600), (0, 0, 0, 255))
         map = Image.new('RGBA', (600, 600), (0, 0, 0, 255))
         for y_pos, elevation_row in enumerate(self.elevation_list):
@@ -68,10 +67,14 @@ class Map():
 class Path():
     def __init__(self, map):
         self.map = map
-        self.path = self.collect_path_points()
-        self.path_crumbs = self.draw_path(self.path)
+        self.path_points = self.collect_path_points(self.x_pos, self.y_pos)
+        self.list_of_paths = self.collect_paths(self.path_points)
+        self.path_crumbs = self.draw_path(self.list_of_paths, self.path_points)
 
-    def collect_path_points(self):
+    x_pos = 0
+    y_pos = 0
+
+    def collect_path_points(self, x, y):
 
         # list of coordinates for each step on my path
 
@@ -81,92 +84,95 @@ class Path():
 
         elevation_change = []
 
-        # hardcoded starting points, to be replaced with a random starting point
-        
-        x_pos = 0
-        y_pos = 360
-
         # current elevation, needed to determine which step to take next
         
-        current_elev = int(self.map.elevation_list[y_pos][x_pos])
+        current_elev = int(self.map.elevation_list[y][x])
 
         # add my first coord to my coord list
         
-        path_points.append((x_pos, y_pos))
+        path_points.append((x, y))
 
         # let's replace my hardcoded start point with a list of all start points
-
-        while x_pos < 599:
+        
+        while x < 599:
 
             # defining my three potential steps
-        
 
-            if y_pos == 0:
+            if y == 0:
 
-                step_ahead = abs(current_elev - int(self.map.elevation_list[y_pos][x_pos + 1]))
-                step_down = abs(current_elev - int(self.map.elevation_list[y_pos + 1][x_pos + 1]))
+                step_ahead = abs(current_elev - int(self.map.elevation_list[y][x + 1]))
+                step_down = abs(current_elev - int(self.map.elevation_list[y + 1][x + 1]))
 
                 if step_ahead <= step_down:
-                    x_pos += 1
-                    path_points.append((x_pos, y_pos))
+                    x += 1
+                    path_points.append((x, y))
                     elevation_change.append(step_ahead)
                 else:
-                    x_pos += 1
-                    y_pos += 1
-                    path_points.append((x_pos, y_pos))
+                    x += 1
+                    y += 1
+                    path_points.append((x, y))
                     elevation_change.append(step_down)
 
-            if y_pos == 599:
+            if y == 599:
 
-                step_up = abs(current_elev - int(self.map.elevation_list[y_pos - 1][x_pos + 1]))
-                step_ahead = abs(current_elev - int(self.map.elevation_list[y_pos][x_pos + 1]))
+                step_up = abs(current_elev - int(self.map.elevation_list[y - 1][x + 1]))
+                step_ahead = abs(current_elev - int(self.map.elevation_list[y][x + 1]))
 
                 if step_up <= step_ahead:
-                    x_pos += 1
-                    y_pos -= 1
-                    path_points.append((x_pos, y_pos))
+                    x += 1
+                    y -= 1
+                    path_points.append((x, y))
                     elevation_change.append(step_up)
                 else:
-                    x_pos += 1
-                    path_points.append((x_pos, y_pos))
+                    x += 1
+                    path_points.append((x, y))
                     elevation_change.append(step_ahead)
 
             else:
 
-                step_up = abs(current_elev - int(self.map.elevation_list[y_pos - 1][x_pos + 1]))
-                step_ahead = abs(current_elev - int(self.map.elevation_list[y_pos][x_pos + 1]))
-                step_down = abs(current_elev - int(self.map.elevation_list[y_pos + 1][x_pos + 1]))
+                step_up = abs(current_elev - int(self.map.elevation_list[y - 1][x + 1]))
+                step_ahead = abs(current_elev - int(self.map.elevation_list[y][x + 1]))
+                step_down = abs(current_elev - int(self.map.elevation_list[y + 1][x + 1]))
 
             # deciding which of the three potential steps to take, and adding my new coord and elevation to the coord and elevation lists
             
                 if step_up <= step_ahead and step_up <= step_down:
-                    x_pos += 1
-                    y_pos -= 1
-                    path_points.append((x_pos, y_pos))
+                    x += 1
+                    y -= 1
+                    path_points.append((x, y))
                     elevation_change.append(step_up)
                 if step_ahead <= step_up and step_ahead <= step_down:
-                    x_pos += 1
-                    path_points.append((x_pos, y_pos))
+                    x += 1
+                    path_points.append((x, y))
                     elevation_change.append(step_ahead)
                 if step_down <= step_up and step_down <= step_ahead:
-                    x_pos += 1
-                    y_pos += 1
-                    path_points.append((x_pos, y_pos))
+                    x += 1
+                    y += 1
+                    path_points.append((x, y))
                     elevation_change.append(step_down)
-
+        
         return path_points
+
+    def collect_paths(self, path_points):
+
+        list_of_paths = []
+
+        while self.y_pos < 600:
+
+            list_of_paths.append(self.collect_path_points(self.x_pos, self.y_pos))
+
+            self.y_pos += 1
+
+        return list_of_paths
 
     # drawing the path on top of my map
     
-    def draw_path(self, points):
+    def draw_path(self, list_of_paths, path_points):
         rendered_map = Image.open("map.png")
-        for point in points:
-            rendered_map.putpixel((point), (0, 0, 255, 255))
+        for path in list_of_paths:
+            for point in path:
+                rendered_map.putpixel((point), (0, 0, 255, 255))
         rendered_map.show()
-
-
-
-
 
 if __name__ == "__main__":
     map = Map("elevation_small.txt")
