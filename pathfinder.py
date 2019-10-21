@@ -45,23 +45,25 @@ class Map():
         alpha_list = []
         for elevation_row in self.elevation_list:
             for datapoint in elevation_row:
-                alpha_value = int(datapoint)
-                alpha_list.append(round(((alpha_value - self.min_elevation) / (self.max_elevation - self.min_elevation)) * 255))
+                elevation = int(datapoint)
+                alpha_list.append(255 - (round(((elevation - self.min_elevation) / (self.max_elevation - self.min_elevation)) * 255)))
         return alpha_list
 
 # combined my create_point and my draw_map methods into one method, which collects my x and y coords, and uses them to map out my elevation values
 
     def create_map(self, elevation_list, alpha_list):
-        bg = Image.new('RGBA', (600, 600), (0, 0, 0, 255))
         map = Image.new('RGBA', (600, 600), (0, 0, 0, 255))
         for y_pos, elevation_row in enumerate(self.elevation_list):
             for x_pos, datapoint in enumerate(elevation_row):
-                map.putpixel((x_pos, y_pos), (255, 255, 255, self.alpha_list[int(datapoint)]))
-        bg.paste(map, (0,0), map)
-        bg.save("map.png")
+                opacity = self.alpha_list[int(datapoint)]
+                map.putpixel((x_pos, y_pos), (0, 0, 0, opacity))
+                # print(opacity)
+        # print(alpha_list)
+        map.show()
+        map.save("map.png")
 
 
-
+# how do I write the correct index of alpha_list? THAT is my big map problem.
 
 
 class Path():
@@ -82,7 +84,7 @@ class Path():
 
         # the change in elevation for each step I take, which will be needed to discover the most efficient path
 
-        elevation_change = []
+        elevation_change = [0]
 
         # current elevation, needed to determine which step to take next
         
@@ -106,12 +108,12 @@ class Path():
                 if step_ahead <= step_down:
                     x += 1
                     path_points.append((x, y))
-                    elevation_change.append(step_ahead)
+                    elevation_change[0] += step_ahead
                 else:
                     x += 1
                     y += 1
                     path_points.append((x, y))
-                    elevation_change.append(step_down)
+                    elevation_change[0] += step_down
 
             if y == 599:
 
@@ -122,11 +124,11 @@ class Path():
                     x += 1
                     y -= 1
                     path_points.append((x, y))
-                    elevation_change.append(step_up)
+                    elevation_change[0] += step_up
                 else:
                     x += 1
                     path_points.append((x, y))
-                    elevation_change.append(step_ahead)
+                    elevation_change[0] += step_ahead
 
             else:
 
@@ -140,18 +142,20 @@ class Path():
                     x += 1
                     y -= 1
                     path_points.append((x, y))
-                    elevation_change.append(step_up)
-                if step_ahead <= step_up and step_ahead <= step_down:
+                    elevation_change[0] += step_up
+                elif step_ahead <= step_up and step_ahead <= step_down:
                     x += 1
                     path_points.append((x, y))
-                    elevation_change.append(step_ahead)
-                if step_down <= step_up and step_down <= step_ahead:
+                    elevation_change[0] += step_ahead
+                else:
                     x += 1
                     y += 1
                     path_points.append((x, y))
-                    elevation_change.append(step_down)
-        
+                    elevation_change[0] += step_down
+
         return path_points
+
+    # collecting each path into one list
 
     def collect_paths(self, path_points):
 
@@ -165,7 +169,7 @@ class Path():
 
         return list_of_paths
 
-    # drawing the path on top of my map
+    # drawing every path on top of my map
     
     def draw_path(self, list_of_paths, path_points):
         rendered_map = Image.open("map.png")
