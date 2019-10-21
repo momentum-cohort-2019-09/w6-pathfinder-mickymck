@@ -59,7 +59,6 @@ class Map():
                 map.putpixel((x_pos, y_pos), (0, 0, 0, opacity))
                 # print(opacity)
         # print(alpha_list)
-        map.show()
         map.save("map.png")
 
 
@@ -176,8 +175,8 @@ class Path():
         for path in list_of_paths:
             for point in path:
                 rendered_map.putpixel((point), (0, 0, 255, 255))
-        rendered_map.show()
         rendered_map.save("map_and_paths.png")
+        rendered_map.show()
 
 if __name__ == "__main__":
     map = Map("elevation_small.txt")
