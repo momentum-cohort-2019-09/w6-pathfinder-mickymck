@@ -177,6 +177,7 @@ class Path():
             for point in path:
                 rendered_map.putpixel((point), (0, 0, 255, 255))
         rendered_map.show()
+        rendered_map.save("map_and_paths.png")
 
 if __name__ == "__main__":
     map = Map("elevation_small.txt")
